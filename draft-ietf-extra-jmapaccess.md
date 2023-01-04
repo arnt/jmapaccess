@@ -22,6 +22,15 @@ author:
   code: 1040
   country: BE
   email: arnt@gulbrandsen.priv.no
+- name: Bron Gondwana
+  org: Fastmail
+  street: Level 2, 114 William St.
+  city: Melbourne VIC
+  code: 3000
+  country: AU
+  email: brong@fastmailteam.com
+  uri: https://fastmail.com
+
 
 normative:
   RFC8474:
