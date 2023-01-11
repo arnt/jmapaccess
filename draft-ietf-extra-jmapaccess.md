@@ -101,9 +101,9 @@ work with the JMAP server. In this case, the human-readable text MUST
 NOT contain any personal data, or other data that cannot be forwarded
 to the client developers.
 
-Some authentication methods, such as one-time passwords (see
-{{RFC2444}}) and Oauth (see {{RFC7628}}), use tokens that change
-depending on time or sequence. In these cases, JMAPACCESS requires
+Some authentication methods use tokens that change depending on time
+or sequence. One-time passwords (see {{RFC2444}}) and Oauth (see
+{{RFC7628}}) are good examples. In these cases, JMAPACCESS requires
 that this server and the JMAP server use the same sequence. To take
 Oauth as an example, an access token is equally valid with both
 protocols, no matter which server issued it.
