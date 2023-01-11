@@ -37,12 +37,14 @@ normative:
   RFC9051:
 
 informative:
+  RFC2444:
   RFC6530:
   RFC6855:
   RFC6857:
   RFC6858:
   RFC6857:
   RFC6858:
+  RFC7628:
   RFC8620:
 
 --- abstract
@@ -98,6 +100,13 @@ help client developers understand why this authentication would not
 work with the JMAP server. In this case, the human-readable text MUST
 NOT contain any personal data, or other data that cannot be forwarded
 to the client developers.
+
+Some authentication methods, such as one-time passwords (see
+{{RFC2444}}) and Oauth (see {{RFC7628}}), use tokens that change
+depending on time or sequence. In these cases, JMAPACCESS requires
+that this server and the JMAP server use the same sequence. To take
+Oauth as an example, an access token is equally valid with both
+protocols, no matter which server issued it.
 
 Servers are encouraged to report the same message flags and other data
 via both protocols, as far as possible.
