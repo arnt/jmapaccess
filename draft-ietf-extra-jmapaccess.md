@@ -6,7 +6,7 @@ submissiontype: IETF
 area: Applications
 wg: EXTRA
 
-docname: draft-ietf-extra-jmapaccess-00
+docname: draft-ietf-extra-jmapaccess-02
 
 title: The JMAPACCESS Extension for IMAP
 abbrev: IMAP JMAPACCESS
@@ -20,19 +20,21 @@ author:
   street: 6 Rond Point Schumann, Bd. 1
   city: Brussels
   code: 1040
-  country: BE
+  country: Belgium
   email: arnt@gulbrandsen.priv.no
+  uri: https://icann.org/ua
 - name: Bron Gondwana
   org: Fastmail
   street: Level 2, 114 William St.
   city: Melbourne VIC
   code: 3000
-  country: AU
+  country: Australia
   email: brong@fastmailteam.com
   uri: https://fastmail.com
 
 
 normative:
+  RFC3501:
   RFC8474:
   RFC9051:
 
@@ -73,9 +75,10 @@ available via both IMAP and JMAP).
 # Details
 
 By advertising the JMAPACCESS capability, the server asserts that if a
-message has a particular object ID when accessed via either IMAP or
-JMAP (see {{RFC9051}} and {{RFC8620}} respectively), then the same
-message is accessible via the other protocol, and it has the same ID.
+mailbox or message has a particular object ID when accessed via either
+IMAP or JMAP (see {{RFC3501}}, {{RFC9051}} and {{RFC8620}}), then the
+same mailbox or message is accessible via the other protocol, and it
+has the same ID.
 
 The server MUST also advertise the OBJECTID extension, defined by
 {{RFC8474}}. The JMAP session resource that allows access to the same
@@ -85,21 +88,16 @@ This specification does not affect message lifetime: If a client
 accesses a message via IMAP and half a second later via JMAP, then the
 message may have been deleted.
 
-The client requests the URL of the JMAP server by issuing ENABLE
-JMAPACCESS while in authenticated or selected state.
-
-When the server issues ENABLED JMAPACCESS, the server considers the
-way the client authenticated. If the same authentication would work
-with the JMAP server, then the server MUST also send an untagged OK
-response with a JMAPACCESS response code containing a link to the JMAP
-server.
+When the server processes the client's LOGIN/AUTHENTICATE command and
+enters Authenticated state, the server considers the way the client
+authenticated. If the same authentication would work with the JMAP
+server, then the server MUST also send an untagged OK response with a
+JMAPACCESS response code containing a link to the JMAP server.
 
 If the authentication would not succeed with the JMAP server, then the
-server SHOULD send an untagged OK response with human-readable text to
-help client developers understand why this authentication would not
-work with the JMAP server. In this case, the human-readable text MUST
-NOT contain any personal data, or other data that cannot be forwarded
-to the client developers.
+server SHOULD send an untagged OK response with a DEBUGGING response
+code and some human-readable text to help client developers understand
+why this authentication would not work with the JMAP server.
 
 Some authentication methods use tokens that change depending on time
 or sequence. One-time passwords (see {{RFC2444}}) and Oauth (see
@@ -111,6 +109,11 @@ protocols, no matter which server issued it.
 Servers are encouraged to report the same message flags and other data
 via both protocols, as far as possible.
 
+This specification does not require mailboxes to have the same name in
+IMAP and JMAP, even if they share mailbox ID. However, the JMAP
+specification regulates that, in the text about the name and role
+properties in {{RFC8620}} section 2.
+
 Note that all JMAP servers support internationalized email addresses
 (see {{RFC6530}}).  If this IMAP server does not, or the IMAP client
 does not issue ENABLE UTF8=ACCEPT (see {{RFC6855}}), then there is a
@@ -118,30 +121,33 @@ possibility that the client receives accurate address fields via JMAP
 and downgraded fields via IMAP (see (see {{RFC6857}} and {{RFC6858}}
 for examples).
 
-Open issue: What about MAILBOXID?
-
-
-# The JMAPACCESS Response Code
+# The JMAPACCESS and DEBUGGING Response Codes
 
 The JMAPACCESS response code is followed by a single link to a JMAP
 session resource. The server/mailstore at that location is referenced
 as "the JMAP server" in this document.
 
+The DEBUGGING response code asserts that when used with a status
+response, the client may safely forward the human-readable text to the
+client maintainers. The human-readable text MUST NOT contain any
+message contents or other personal information.
+
 The formal syntax in {{RFC9051}} is extended thus:
 
-resp-code-jmap = "JMAPACCESS" SP string
+resp-code-jmap = "JMAPACCESS" SP string / "DEBUGGING"
 
 resp-text-code =/ resp-code-jmap
 
-Open issue: This means that the link cannot contain a "]" character.
-This seems like a nonissue in practice but difficult as a matter of
-protocol hygiene.
+Note that the link cannot contain a "]" character.
+
+The syntax in {{RFC3501}} is extended similarly (this extension may be
+used with IMAP4rev1 as well as IMAP4rev2).
 
 
 # IANA Considerations {#IANA}
 
-The IANA is requested to add the JMAPACCESS response code to the IMAP
-Response Codes registry.
+The IANA is requested to add the JMAPACCESS and DEBUGGING response
+codes to the IMAP Response Codes registry.
 
 
 # Security Considerations {#Security}
