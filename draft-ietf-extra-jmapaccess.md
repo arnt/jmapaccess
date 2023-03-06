@@ -6,7 +6,7 @@ submissiontype: IETF
 area: Applications
 wg: EXTRA
 
-docname: draft-ietf-extra-jmapaccess-03
+docname: draft-ietf-extra-jmapaccess-04
 
 title: The JMAPACCESS Extension for IMAP
 abbrev: IMAP JMAPACCESS
@@ -91,8 +91,8 @@ When the server processes the client's LOGIN/AUTHENTICATE command and
 enters Authenticated state, the server considers the way the client
 authenticated. If the IMAP server can infer from the client's
 authentication process that its credentials suffice to authenticate
-via JMAP, then the server MUST also send an untagged OK response with
-a JMAPACCESS response code containing a link to the JMAP server.
+via JMAP, then the server MUST also send a JMAPACCESS response code
+containing a link to the JMAP server.
 
 If the credentials might not succeed with the JMAP server, then the
 server SHOULD send an untagged OK response with a DEBUGGING response
@@ -141,8 +141,8 @@ used with IMAP4rev1 as well as IMAP4rev2).
 Lines sent by the client are preceded by C:, lines sent by the server
 by S:. Each example starts with the IMAP banner issued when the client
 connects, and generally contains only those capabilities required by
-the example, omitting important but irrelevant capabilities such as
-STARTTLS.
+the example itself, omitting even required capabilities such as
+OBJECTID, JMAPACCESS and STARTTLS.
 
 Example 1. A client connects, sees that SASL OAUTH is available, and
 authenticates in that way.
@@ -164,11 +164,11 @@ example is abbreviated from the more realistic length used in RFC7628.
 Example 2. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command.
 
-S: * OK [CAPABILITY IMAP4rev1] example2<br>
+S: * OK [CAPABILITY IMAP4rev2] example2<br>
 C: 2 LOGIN "arnt" "trondheim"
 
 The server sees that the password is correct, knows that it and its
-JMAP alter ego the same password database, and issues JNAPACCESS
+JMAP alter ego the same password database, and issues JMAPACCESS
 response code:
 
 S: 2 OK [JMAPACCESS "https://example.com/.s/[jmap]"] done
@@ -179,7 +179,7 @@ the same quoting rules as most other IMAP strings.
 Example 3. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command with a correct password.
 
-S: * OK [CAPABILITY IMAP4rev1] example3<br>
+S: * OK [CAPABILITY IMAP4rev1 IMAP4rev2] example3<br>
 C: 3 LOGIN "arnt" "trondheim"
 
 The server operator has decided to disable password use with JMAP, but
@@ -194,7 +194,7 @@ same quoting rules as most other IMAP strings.
 Example 4. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command. Its password is incorrect.
 
-S: * OK [CAPABILITY IMAP4rev1 AUTH=GSS] example4<br>
+S: * OK [CAPABILITY IMAP4rev2 AUTH=GSS] example4<br>
 C: 4 LOGIN "arnt" "oslo"
 
 The server does not enter Authenticated state, so nothing requires it
@@ -209,15 +209,15 @@ codes to the IMAP Response Codes registry.
 
 # Security Considerations {#Security}
 
-This extension reveals to clients why they cannot auhenticate to the
-JMAP server. One normally does not want to reveal anything about why a
+DEBUGGING reveals to clients why they cannot auhenticate to the JMAP
+server. One normally does not want to reveal anything about why a
 client cannot authenticate, for fear of giving useful information to
 an intruder.
 
 However, in this case the client has already authenticated via
 IMAP. By doing so the client already gained access to all of the same
-mail. The authors believe that the debugging value of the OK response
-far outweighs its security concerns.
+mail. The authors believe that the debugging value of the response
+code far outweighs its security concerns.
 
 --- back
 
