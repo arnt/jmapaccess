@@ -90,21 +90,15 @@ message may have been deleted.
 
 When the server processes the client's LOGIN/AUTHENTICATE command and
 enters Authenticated state, the server considers the way the client
-authenticated. If the same authentication would work with the JMAP
-server, then the server MUST also send an untagged OK response with a
-JMAPACCESS response code containing a link to the JMAP server.
+authenticated. If the IMAP server can infer from the client's
+authentication process that its credentials suffice to authenticate
+via JMAP, then the server MUST also send an untagged OK response with
+a JMAPACCESS response code containing a link to the JMAP server.
 
-If the authentication would not succeed with the JMAP server, then the
+If the credentials might not succeed with the JMAP server, then the
 server SHOULD send an untagged OK response with a DEBUGGING response
-code and some human-readable text to help client developers understand
-why this authentication would not work with the JMAP server.
-
-Some authentication methods use tokens that change depending on time
-or sequence. One-time passwords (see {{RFC2444}}) and Oauth (see
-{{RFC7628}}) are good examples. In these cases, JMAPACCESS requires
-that this server and the JMAP server use the same sequence. To take
-Oauth as an example, an access token is equally valid with both
-protocols, no matter which server issued it.
+code with a message to help client developers understand why this
+authentication would not work with the JMAP server.
 
 Servers are encouraged to report the same message flags and other data
 via both protocols, as far as possible.
@@ -128,27 +122,76 @@ session resource. The server/mailstore at that location is referenced
 as "the JMAP server" in this document.
 
 The DEBUGGING response code asserts that when used with a status
-response, the client may safely forward the human-readable text to the
-client maintainers. The human-readable text MUST NOT contain any
-message contents or other personal information.
+response, the client may safely forward the string argument to the
+client maintainers. The argument MUST NOT contain any message contents
+or other personal information.
 
 The formal syntax in {{RFC9051}} is extended thus:
 
-resp-code-jmap = "JMAPACCESS" SP string / "DEBUGGING"
+resp-code-jmapaccess = "JMAPACCESS" SP (atom / quoted)
 
-resp-text-code =/ resp-code-jmap
+resp-code-debugging = "DEBUGGING" SP (atom / quoted)
 
-Note that the link cannot contain a "]" character.
+resp-text-code =/ resp-code-jmapaccess / resp-code-debugging
 
 The syntax in {{RFC3501}} is extended similarly (this extension may be
 used with IMAP4rev1 as well as IMAP4rev2).
 
+# Examples {#Examples}
+
+Example 1. A client connects, sees that SASL OAUTH is available, and
+authenticates in that way.
+
+S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example1 IMAP server\
+C: e1 AUTHENCITATE OAUTHBEARER bixhPXVzZ...QEB
+
+The server processes the command successfully. Since it knows that the
+client used Oauth, and that it and its JMAP alter ego use the same
+Oauth backend subsystem, the server infers that the (next) access
+token is just a usable via JMAP as via IMAP. It issues a JMAPACCESS
+response code in its reply:
+
+S: e1 OK [JMAPACCESS https://example.com/jmap] done
+
+Example 2. A client connects, sees no SASL method it recognises, and
+issues a LOGIN command.
+
+S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example2 IMAP server\
+C: e2 LOGIN "arnt" "trondheim"
+
+The server sees that the password is correct, knows that it and its
+JMAP alter ego the same password database, and issues JNAPACCESS
+response code:
+
+S: e2 OK [JMAPACCESS https://example.com/jmap] done
+
+Example 3. A client connects, sees no SASL method it recognises, and
+issues a LOGIN command with a correct password.
+
+S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example3 IMAP server\
+C: e3 LOGIN "arnt" "trondheim"
+
+The server operator has decided to disable password use with JMAP, but
+allow it for a while with IMAP to cater to older clients. The server
+issues a DEBUGGING response code in its reply:
+
+S: e3 OK [DEBUGGING "Cleartext passwords disabled with JMAP"] done
+
+Example 4. A client connects, sees no SASL method it recognises, and
+issues a LOGIN command. Its password is incorrect.
+
+S: * OK [CAPABILITY IMAP4rev1 AUTH=GSS ...] example4 IMAP server\
+C: e4 LOGIN "arnt" "oslo"
+
+The server does not enter Authenticated state, so nothing requires it
+to issue either JMAPACCESS or DEBUGGING.
+
+S: e4 NO done
 
 # IANA Considerations {#IANA}
 
 The IANA is requested to add the JMAPACCESS and DEBUGGING response
 codes to the IMAP Response Codes registry.
-
 
 # Security Considerations {#Security}
 
@@ -161,7 +204,6 @@ However, in this case the client has already authenticated via
 IMAP. By doing so the client already gained access to all of the same
 mail. The authors believe that the debugging value of the OK response
 far outweighs its security concerns.
-
 
 --- back
 
