@@ -6,7 +6,7 @@ submissiontype: IETF
 area: Applications
 wg: EXTRA
 
-docname: draft-ietf-extra-jmapaccess-02
+docname: draft-ietf-extra-jmapaccess-03
 
 title: The JMAPACCESS Extension for IMAP
 abbrev: IMAP JMAPACCESS
@@ -39,7 +39,6 @@ normative:
   RFC9051:
 
 informative:
-  RFC2444:
   RFC6530:
   RFC6855:
   RFC6857:
@@ -139,11 +138,17 @@ used with IMAP4rev1 as well as IMAP4rev2).
 
 # Examples {#Examples}
 
+Lines sent by the client are preceded by C:, lines sent by the server
+by S:. Each example starts with the IMAP banner issued when the client
+connects, and generally contains only those capabilities required by
+the example, omitting important but irrelevant capabilities such as
+STARTTLS.
+
 Example 1. A client connects, sees that SASL OAUTH is available, and
 authenticates in that way.
 
-S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example1 IMAP server\
-C: e1 AUTHENCITATE OAUTHBEARER bixhPXVzZ...QEB
+S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER SASL-IR] example1<br>
+C: 1 AUTHENCITATE OAUTHBEARER bixhPXVzZ...QEB
 
 The server processes the command successfully. Since it knows that the
 client used Oauth, and that it and its JMAP alter ego use the same
@@ -151,42 +156,51 @@ Oauth backend subsystem, the server infers that the (next) access
 token is just a usable via JMAP as via IMAP. It issues a JMAPACCESS
 response code in its reply:
 
-S: e1 OK [JMAPACCESS https://example.com/jmap] done
+S: 1 OK [JMAPACCESS https://example.com/jmap] done
+
+SASL OAUTH is specified by {{RFC7628}}, and the argument in this
+example is abbreviated from the more realistic length used in RFC7628.
 
 Example 2. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command.
 
-S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example2 IMAP server\
-C: e2 LOGIN "arnt" "trondheim"
+S: * OK [CAPABILITY IMAP4rev1] example2<br>
+C: 2 LOGIN "arnt" "trondheim"
 
 The server sees that the password is correct, knows that it and its
 JMAP alter ego the same password database, and issues JNAPACCESS
 response code:
 
-S: e2 OK [JMAPACCESS https://example.com/jmap] done
+S: 2 OK [JMAPACCESS "https://example.com/.s/[jmap]"] done
+
+The URL is quoted since the ] character must be quoted. The URL uses
+the same quoting rules as most other IMAP strings.
 
 Example 3. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command with a correct password.
 
-S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER ...] example3 IMAP server\
-C: e3 LOGIN "arnt" "trondheim"
+S: * OK [CAPABILITY IMAP4rev1] example3<br>
+C: 3 LOGIN "arnt" "trondheim"
 
 The server operator has decided to disable password use with JMAP, but
 allow it for a while with IMAP to cater to older clients. The server
 issues a DEBUGGING response code in its reply:
 
-S: e3 OK [DEBUGGING "Cleartext passwords disabled with JMAP"] done
+S: 3 OK [DEBUGGING "Cleartext passwords disabled with JMAP"] done
+
+The message is quoted since it contains spaces. The message uses the
+same quoting rules as most other IMAP strings.
 
 Example 4. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command. Its password is incorrect.
 
-S: * OK [CAPABILITY IMAP4rev1 AUTH=GSS ...] example4 IMAP server\
-C: e4 LOGIN "arnt" "oslo"
+S: * OK [CAPABILITY IMAP4rev1 AUTH=GSS] example4<br>
+C: 4 LOGIN "arnt" "oslo"
 
 The server does not enter Authenticated state, so nothing requires it
-to issue either JMAPACCESS or DEBUGGING.
+to issue either JMAPACCESS or DEBUGGING. It replies curtly:
 
-S: e4 NO done
+S: 4 NO done
 
 # IANA Considerations {#IANA}
 
