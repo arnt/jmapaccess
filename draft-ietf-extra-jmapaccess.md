@@ -6,7 +6,7 @@ submissiontype: IETF
 area: Applications
 wg: EXTRA
 
-docname: draft-ietf-extra-jmapaccess-04
+docname: draft-ietf-extra-jmapaccess
 
 title: The JMAPACCESS Extension for IMAP
 abbrev: IMAP JMAPACCESS
