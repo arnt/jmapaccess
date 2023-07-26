@@ -148,7 +148,7 @@ Example 1. A client connects, sees that SASL OAUTH is available, and
 authenticates in that way.
 
 S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER SASL-IR] example1<br>
-C: 1 AUTHENCITATE OAUTHBEARER bixhPXVzZ...QEB
+C: 1 AUTHENTICATE OAUTHBEARER bixhPXVzZ...QEB
 
 The server processes the command successfully. Since it knows that the
 client used Oauth, and that it and its JMAP alter ego use the same
@@ -167,11 +167,12 @@ issues a LOGIN command.
 S: * OK [CAPABILITY IMAP4rev2] example2<br>
 C: 2 LOGIN "arnt" "trondheim"
 
-The server sees that the password is correct, knows that it and its
-JMAP alter ego the same password database, and issues JMAPACCESS
+The server sees that the password is accepted, knows that it and its
+JMAP alter ego the same password database, and issues a JMAPACCESS
 response code:
 
-S: 2 OK [JMAPACCESS "https://example.com/.s/[jmap]"] done
+S: * OK [JMAPACCESS "https://example.com/.s/[jmap]"] For JMAP access
+S: 2 OK done
 
 The URL is quoted since the ] character must be quoted. The URL uses
 the same quoting rules as most other IMAP strings.
@@ -186,7 +187,7 @@ The server operator has decided to disable password use with JMAP, but
 allow it for a while with IMAP to cater to older clients. The server
 issues a DEBUGGING response code in its reply:
 
-S: 3 OK [DEBUGGING "Cleartext passwords disabled with JMAP"] done
+S: 3 OK [DEBUGGING "Cleartext passwords are being disabled"] done
 
 The message is quoted since it contains spaces. The message uses the
 same quoting rules as most other IMAP strings.
