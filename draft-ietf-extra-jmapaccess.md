@@ -67,6 +67,10 @@ messages in its mailstore are also available via JMAP. For simplicity,
 only a complete equivalence is supported (the same set of messages are
 available via both IMAP and JMAP).
 
+This document also defines a way to provide debugging information that
+can be forwarded to client developers without privacy concerns, which
+is used by JMAPACCESS but can also be used by others.
+
 # Requirements Language
 
 {::boilerplate bcp14-tagged}
@@ -85,7 +89,7 @@ messages is called "the JMAP server" below.
 
 This specification does not affect message lifetime: If a client
 accesses a message via IMAP and half a second later via JMAP, then the
-message may have been deleted.
+message may have been deleted between the two accesses.
 
 When the server processes the client's LOGIN/AUTHENTICATE command and
 enters Authenticated state, the server considers the way the client
@@ -120,10 +124,12 @@ The JMAPACCESS response code is followed by a single link to a JMAP
 session resource. The server/mailstore at that location is referenced
 as "the JMAP server" in this document.
 
-The DEBUGGING response code asserts that when used with a status
-response, the client may safely forward the string argument to the
-client maintainers. The argument MUST NOT contain any message contents
-or other personal information.
+The DEBUGGING response code asserts that the client may forward the
+string argument to the client maintainers without privacy concerns,
+and that the argument relates to a currently active command. The
+argument MUST NOT contain any message contents or other personal
+information. The DEBUGGING response code is generically named because
+it is expected to be useful for more than just JMAPACCESS.
 
 The formal syntax in {{RFC9051}} is extended thus:
 
@@ -139,10 +145,13 @@ used with IMAP4rev1 as well as IMAP4rev2).
 # Examples {#Examples}
 
 Lines sent by the client are preceded by C:, lines sent by the server
-by S:. Each example starts with the IMAP banner issued when the client
-connects, and generally contains only those capabilities required by
-the example itself, omitting even required capabilities such as
-OBJECTID, JMAPACCESS and STARTTLS.
+by S:. Each example starts with the IMAP banner issued by the server
+on connection, and generally abbreviates the capability lists to
+what's required by the example itself.
+
+Real connections use longer capability lists, much longer AUTHENTICATE
+arguments and of course use TLS. These examples focus on JMAPACCESS,
+though.
 
 Example 1. A client connects, sees that SASL OAUTH is available, and
 authenticates in that way.
@@ -150,11 +159,11 @@ authenticates in that way.
 S: * OK [CAPABILITY IMAP4rev1 AUTH=OAUTHBEARER SASL-IR] example1<br>
 C: 1 AUTHENTICATE OAUTHBEARER bixhPXVzZ...QEB
 
-The server processes the command successfully. Since it knows that the
+The server processes the command successfully. It knows that the
 client used Oauth, and that it and its JMAP alter ego use the same
-Oauth backend subsystem, the server infers that the (next) access
-token is just a usable via JMAP as via IMAP. It issues a JMAPACCESS
-response code in its reply:
+Oauth backend subsystem. Because of that it infers that the (next)
+access token is just as usable via JMAP as via IMAP. It issues a
+JMAPACCESS response code in its reply:
 
 S: 1 OK [JMAPACCESS https://example.com/jmap] done
 
@@ -168,7 +177,7 @@ S: * OK [CAPABILITY IMAP4rev2] example2<br>
 C: 2 LOGIN "arnt" "trondheim"
 
 The server sees that the password is accepted, knows that it and its
-JMAP alter ego the same password database, and issues a JMAPACCESS
+JMAP alter ego use the same password database, and issues a JMAPACCESS
 response code:
 
 S: * OK [JMAPACCESS "https://example.com/.s/[jmap]"] For JMAP access
@@ -206,19 +215,26 @@ S: 4 NO done
 # IANA Considerations {#IANA}
 
 The IANA is requested to add the JMAPACCESS and DEBUGGING response
-codes to the IMAP Response Codes registry.
+codes to the IMAP Response Codes registry, with this document as
+reference.
 
 # Security Considerations {#Security}
 
-DEBUGGING reveals to clients why they cannot auhenticate to the JMAP
-server. One normally does not want to reveal anything about why a
-client cannot authenticate, for fear of giving useful information to
-an intruder.
+This document suggests that servers reveal to clients why they cannot
+authenticate to the JMAP server. One normally does not want to reveal
+anything about why a client cannot authenticate, for fear of giving
+useful information to an intruder.
 
 However, in this case the client has already authenticated via
 IMAP. By doing so the client already gained access to all of the same
-mail. The authors believe that the debugging value of the response
-code far outweighs its security concerns.
+mail. The authors believe that the debugging value of sending the
+DEBUGGING response code far outweighs its security concerns.
+
+DEBUGGING also reveals infomation about the connection state to the
+client developer. It's essential that this never includes information
+about the user or the email, such as for example the name of a related
+mailbox or a command argument that might contain personal information
+due to a client bug.
 
 --- back
 
