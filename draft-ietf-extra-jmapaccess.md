@@ -52,20 +52,17 @@ informative:
 
 This document defines an IMAP extension to let clients know that the
 messages in this IMAP server are also available via JMAP, and how. It is
-intended for clients that want to migrate gradually to JMAP.
+intended for clients that want to migrate gradually to JMAP or use
+JMAP extensions within an IMAP client.
 
 --- middle
 
 # Introduction
 
-A few IMAP client maintainers have asked for ways to use features that
-are available in JMAP without having to drop their expensively tested
-IMAP code.
-
-This document provides a server with a way to declare that the
-messages in its mailstore are also available via JMAP. For simplicity,
-only a complete equivalence is supported (the same set of messages are
-available via both IMAP and JMAP).
+An IMAP server can declare that the messages in its mailstore are also
+available via JMAP. For simplicity, only a complete equivalence is
+supported (the same set of messages are available via both IMAP and
+JMAP).
 
 This document also defines a way to provide debugging information that
 can be forwarded to client developers without privacy concerns, which
