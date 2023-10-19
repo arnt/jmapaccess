@@ -108,7 +108,8 @@ Note that all JMAP servers support internationalized email addresses
 does not issue ENABLE UTF8=ACCEPT (see {{RFC6855}}), then there is a
 possibility that the client receives accurate address fields via JMAP
 and downgraded fields via IMAP (see (see {{RFC6857}} and {{RFC6858}}
-for examples).
+for examples). Issuing ENABLE UTF8=ACCEPT is a simple way to sidestep
+the issue.
 
 # The JMAPACCESS Response Code
 
