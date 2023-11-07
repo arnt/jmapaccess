@@ -64,9 +64,10 @@ available via JMAP. For simplicity, only a complete equivalence is
 supported (the same set of messages are available via both IMAP and
 JMAP).
 
-This document also defines a way to provide debugging information that
-can be forwarded to client developers without privacy concerns, which
-is used by JMAPACCESS but can also be used by others.
+This can be useful for clients that have well-tested IMAP code and want to
+use one or more JMAP features. For example, JMAP offers a way to be
+notified about new incoming mail without having to maintain an open TCP
+connection.
 
 # Requirements Language
 
@@ -195,6 +196,18 @@ The server does not enter Authenticated state, so nothing requires it
 to issue JMAPACCESS. It replies curtly:
 
 S: 4 NO done
+
+# Security Considerations {#Security}
+
+This document suggests that servers reveal something to clients about
+how/whether their credentials would work for another server. One normally
+does not want to reveal anything at all about why a client cannot
+authenticate, for fear of giving useful information to an intruder.
+
+However, in this case the client has already authenticated via IMAP. By
+doing so the client already gained access to all of the same mail. The
+authors believe that telling the client that it can use JMAP presents no
+additional risk.
 
 # IANA Considerations {#IANA}
 
