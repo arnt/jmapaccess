@@ -75,7 +75,7 @@ connection.
 
 # Details
 
-EDIT: By sending the JMAPACCESS response code, the server asserts that if a
+By advertising the JMAPACCESS capability, the server asserts that if a
 mailbox or message has a particular object ID when accessed via either
 IMAP or JMAP (see {{RFC3501}}, {{RFC9051}} and {{RFC8620}}), then the
 same mailbox or message is accessible via the other protocol, and it
@@ -93,8 +93,9 @@ When the server processes the client's LOGIN/AUTHENTICATE command and
 enters Authenticated state, the server considers the way the client
 authenticated. If the IMAP server can infer from the client's
 authentication process that its credentials suffice to authenticate
-via JMAP, then the server MUST also send a JMAPACCESS response code
-containing a link to the JMAP server.
+via JMAP, then the server MUST include a JMAPACCESS capability in any
+capability list sent after that point. This includes the capability
+list that some servers send immediately when authentication succeeds.
 
 Servers are encouraged to report the same message flags and other data
 via both protocols, as far as possible.
@@ -112,25 +113,33 @@ and downgraded fields via IMAP (see (see {{RFC6857}} and {{RFC6858}}
 for examples). Issuing ENABLE UTF8=ACCEPT is a simple way to sidestep
 the issue.
 
-# The JMAPACCESS Response Code
+# The GETJMAPACCESS command and the JMAPACCESS response
 
-The JMAPACCESS response code is followed by a single link to a JMAP
+The GETJMAPACCESS command requests that the server respond with the
+session URL for the JMAP server that provides access to the same mail.
+
+If such a JMAP server is known to this server, the server MUST respond
+with an untagged JMAPACCESS response containing the JMAP server's
+session resource (a URL) followed by a tagged OK response.
+
+If such a JMAP server is not known, the server MUST respond with a
+tagged BAD response (and MUST NOT include JMAPACCESS in the capability
+list).
+
+The JMAPACCESS response is followed by a single link to a JMAP
 session resource. The server/mailstore at that location is referenced
 as "the JMAP server" in this document.
 
 The formal syntax in {{RFC9051}} is extended thus:
 
-resp-code-jmapaccess = "JMAPACCESS" SP quoted
+command-auth =/ "GETJMAPACCESS"
 
-resp-text-code =/ resp-code-jmapaccess
+mailbox-data =/ resp-jmapaccess
+
+resp-jmapaccess = "JMAPACCESS" SP quoted
 
 The syntax in {{RFC3501}} is extended similarly (this extension may be
 used with IMAP4rev1 as well as IMAP4rev2).
-
-Note that some clients parse response codes from the outside,
-ie. scanning for the following ']' before they parse the contents of
-the response code. Sending a URL that contains either '"' or ']' may
-be risky.
 
 # Examples {#Examples}
 
@@ -152,10 +161,14 @@ C: 1 AUTHENTICATE OAUTHBEARER bixhPXVzZ...QEB
 The server processes the command successfully. It knows that the
 client used Oauth, and that it and its JMAP alter ego use the same
 Oauth backend subsystem. Because of that it infers that the (next)
-access token is just as usable via JMAP as via IMAP. It issues a
-JMAPACCESS response code in its reply:
+access token is just as usable via JMAP as via IMAP. It includes a
+JMAPACCESS capability in its reply (again, real capability lists are
+much longer):
 
-S: 1 OK [JMAPACCESS "https://example.com/jmap"] done
+S: 1 OK [CAPABILITY IMAP4rev1 JMAPACCESS] done<br>
+C: 1b GETJMAPACCESS<br>
+S: * JMAPACCESS "https://example.com/jmap"<br>
+S: 1b OK done
 
 SASL OAUTH is specified by {{RFC7628}}, and the argument in this
 example is abbreviated from the more realistic length used in RFC7628.
@@ -168,15 +181,15 @@ C: 2 LOGIN "arnt" "trondheim"
 
 The server sees that the password is accepted, knows that it and its
 JMAP alter ego use the same password database, and issues a JMAPACCESS
-response code:
+capability:
 
-S: * OK [JMAPACCESS "https://example.com/.s/[jmap]"] For JMAP access
-S: 2 OK done
+S: * OK [CAPABILITY IMAP4rev2 JMAPACCESS] done<br>
+S: 2 OK done<br>
+C: 2b JMAPACCESS<br>
+S: * JMAPACCESS "https://example.com/.s/[jmap]"<br>
+S: 2b OK done
 
-The URL uses the same quoting rules as most other IMAP strings, and
-"]" is permitted in quoted strings. Permitted but in this case not
-encouraged, since some clients are known to scan for the "]" before
-parsing the string inside "[]". Luckily, few URLs contain "]".
+The URL uses the same quoting rules as most other IMAP strings.
 
 Example 3. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command with a correct password.
@@ -186,7 +199,7 @@ C: 3 LOGIN "arnt" "trondheim"
 
 The server operator has decided to disable password use with JMAP, but
 allow it for a while with IMAP to cater to older clients, so the login
-succeeds, but there is no JMAPACCESS response code.
+succeeds, but there is no JMAPACCESS capability.
 
 S: 3 OK done
 
@@ -197,7 +210,7 @@ S: * OK [CAPABILITY IMAP4rev2 AUTH=GSS] example4<br>
 C: 4 LOGIN "arnt" "oslo"
 
 The server does not enter Authenticated state, so nothing requires it
-to issue JMAPACCESS. It replies curtly:
+to mention JMAPACCESS. It replies curtly:
 
 S: 4 NO done
 
@@ -215,21 +228,21 @@ additional risk.
 
 # IANA Considerations {#IANA}
 
-The IANA is requested to add the JMAPACCESS response code to the IMAP
-Response Codes registry, with this document as reference.
+The IANA is requested to add the JMAPACCESS capability the IMAP
+Capabilities registry, with this document as reference.
 
 # Security Considerations {#Security}
 
-The JMAPACCESS response code reveals to authenticated IMAP clients that
-they would be able to authenticate via JMAP using the same credentials,
-and that the object IDs match.
+JMAPACCESS reveals to authenticated IMAP clients that they would be
+able to authenticate via JMAP using the same credentials, and that the
+object IDs match.
 
-One does not normally wish reveal anything at all about authentication.
-However, in this case information is revealed to an authenticated client,
-the revealed URL can usually be found via JMAP autodiscovery, and an
-attacker would only need to try the credentials used once anyway (a matter
-of a second or two). Therefore, it is believed that this document does not
-benefit an attacker noticeably, and its value for migration far outweighs
-its risk.
+One does not normally reveal anything at all about authentication.
+However, in this case information is revealed to an authenticated
+client, the revealed URL can usually be found via JMAP autodiscovery,
+and an attacker would only need to try the credentials it has with an
+autodiscovered JMAP URL (a matter of a second or two). Therefore, it
+is believed that this document does not benefit an attacker
+noticeably, and its value for migration far outweighs its risk.
 
 --- back
