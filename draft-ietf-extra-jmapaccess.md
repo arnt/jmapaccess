@@ -75,7 +75,7 @@ connection.
 
 # Details
 
-By advertising the JMAPACCESS capability, the server asserts that if a
+EDIT: By sending the JMAPACCESS response code, the server asserts that if a
 mailbox or message has a particular object ID when accessed via either
 IMAP or JMAP (see {{RFC3501}}, {{RFC9051}} and {{RFC8620}}), then the
 same mailbox or message is accessible via the other protocol, and it
@@ -120,12 +120,17 @@ as "the JMAP server" in this document.
 
 The formal syntax in {{RFC9051}} is extended thus:
 
-resp-code-jmapaccess = "JMAPACCESS" SP (atom / quoted)
+resp-code-jmapaccess = "JMAPACCESS" SP quoted
 
 resp-text-code =/ resp-code-jmapaccess
 
 The syntax in {{RFC3501}} is extended similarly (this extension may be
 used with IMAP4rev1 as well as IMAP4rev2).
+
+Note that some clients parse response codes from the outside,
+ie. scanning for the following ']' before they parse the contents of
+the response code. Sending a URL that contains either '"' or ']' may
+be risky.
 
 # Examples {#Examples}
 
@@ -150,7 +155,7 @@ Oauth backend subsystem. Because of that it infers that the (next)
 access token is just as usable via JMAP as via IMAP. It issues a
 JMAPACCESS response code in its reply:
 
-S: 1 OK [JMAPACCESS https://example.com/jmap] done
+S: 1 OK [JMAPACCESS "https://example.com/jmap"] done
 
 SASL OAUTH is specified by {{RFC7628}}, and the argument in this
 example is abbreviated from the more realistic length used in RFC7628.
@@ -168,8 +173,10 @@ response code:
 S: * OK [JMAPACCESS "https://example.com/.s/[jmap]"] For JMAP access
 S: 2 OK done
 
-The URL is quoted since the ] character must be quoted. The URL uses
-the same quoting rules as most other IMAP strings.
+The URL uses the same quoting rules as most other IMAP strings, and
+"]" is permitted in quoted strings. Permitted but in this case not
+encouraged, since some clients are known to scan for the "]" before
+parsing the string inside "[]". Luckily, few URLs contain "]".
 
 Example 3. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command with a correct password.
@@ -182,9 +189,6 @@ allow it for a while with IMAP to cater to older clients, so the login
 succeeds, but there is no JMAPACCESS response code.
 
 S: 3 OK done
-
-The message is quoted since it contains spaces. The message uses the
-same quoting rules as most other IMAP strings.
 
 Example 4. A client connects, sees no SASL method it recognises, and
 issues a LOGIN command. Its password is incorrect.
@@ -214,5 +218,18 @@ additional risk.
 The IANA is requested to add the JMAPACCESS response code to the IMAP
 Response Codes registry, with this document as reference.
 
---- back
+# Security Considerations {#Security}
 
+The JMAPACCESS response code reveals to authenticated IMAP clients that
+they would be able to authenticate via JMAP using the same credentials,
+and that the object IDs match.
+
+One does not normally wish reveal anything at all about authentication.
+However, in this case information is revealed to an authenticated client,
+the revealed URL can usually be found via JMAP autodiscovery, and an
+attacker would only need to try the credentials used once anyway (a matter
+of a second or two). Therefore, it is believed that this document does not
+benefit an attacker noticeably, and its value for migration far outweighs
+its risk.
+
+--- back
