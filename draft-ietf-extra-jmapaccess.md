@@ -100,10 +100,8 @@ list that some servers send immediately when authentication succeeds.
 Servers are encouraged to report the same message flags and other data
 via both protocols, as far as possible.
 
-This specification does not require mailboxes to have the same name in
-IMAP and JMAP, even if they share mailbox ID. However, the JMAP
-specification regulates that, in the text about the name and role
-properties in {{RFC8620}} section 2.
+The JMAP specification ({{RFC8622}} sections 1.6 and 2) specifies how
+mailbox IDs and names in JMAP relate to those in IMAP.
 
 Note that all JMAP servers support internationalized email addresses
 (see {{RFC6530}}).  If this IMAP server does not, or the IMAP client
@@ -120,15 +118,16 @@ session URL for the JMAP server that provides access to the same mail.
 
 If such a JMAP server is known to this server, the server MUST respond
 with an untagged JMAPACCESS response containing the JMAP server's
-session resource (a URL) followed by a tagged OK response.
+session resource followed
+by a tagged OK response.
 
 If such a JMAP server is not known, the server MUST respond with a
 tagged BAD response (and MUST NOT include JMAPACCESS in the capability
 list).
 
-The JMAPACCESS response is followed by a single link to a JMAP
-session resource. The server/mailstore at that location is referenced
-as "the JMAP server" in this document.
+The JMAPACCESS response is followed by a single link to a JMAP session
+resource, as described in {{RFC8620}} section 2. The server/mailstore
+at that location is referenced as "the JMAP server" in this document.
 
 The formal syntax in {{RFC9051}} is extended thus:
 
@@ -185,7 +184,7 @@ capability:
 
 S: * OK [CAPABILITY IMAP4rev2 JMAPACCESS] done<br>
 S: 2 OK done<br>
-C: 2b JMAPACCESS<br>
+C: 2b GETJMAPACCESS<br>
 S: * JMAPACCESS "https://example.com/.s/[jmap]"<br>
 S: 2b OK done
 
@@ -216,33 +215,22 @@ S: 4 NO done
 
 # Security Considerations {#Security}
 
-This document suggests that servers reveal something to clients about
-how/whether their credentials would work for another server. One normally
-does not want to reveal anything at all about why a client cannot
-authenticate, for fear of giving useful information to an intruder.
+JMAPACCESS reveals to authenticated IMAP clients that they would be
+able to authenticate via JMAP using the same credentials, and that the
+object IDs match. One normally does not want to reveal anything at all
+about why a client cannot authenticate, for fear of giving useful
+information to an intruder.
 
-However, in this case the client has already authenticated via IMAP. By
-doing so the client already gained access to all of the same mail. The
-authors believe that telling the client that it can use JMAP presents no
-additional risk.
+However, in this case information is revealed to an authenticated
+client, the revealed URL can usually be found via JMAP autodiscovery,
+and an attacker would only need to try the credentials it has with an
+autodiscovered JMAP URL (a matter of a second or two). Therefore, it
+is believed that JMAPACCESS does not benefit an attacker noticeably,
+and its value for migration far outweighs its risk.
 
 # IANA Considerations {#IANA}
 
 The IANA is requested to add the JMAPACCESS capability the IMAP
 Capabilities registry, with this document as reference.
-
-# Security Considerations {#Security}
-
-JMAPACCESS reveals to authenticated IMAP clients that they would be
-able to authenticate via JMAP using the same credentials, and that the
-object IDs match.
-
-One does not normally reveal anything at all about authentication.
-However, in this case information is revealed to an authenticated
-client, the revealed URL can usually be found via JMAP autodiscovery,
-and an attacker would only need to try the credentials it has with an
-autodiscovered JMAP URL (a matter of a second or two). Therefore, it
-is believed that this document does not benefit an attacker
-noticeably, and its value for migration far outweighs its risk.
 
 --- back
